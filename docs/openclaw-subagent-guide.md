@@ -626,13 +626,140 @@ const toolSchemas = getToolSchemas({ isSubagent: this.isSubagent })
 | 禁止嵌套 | ✅ session key 检查 | ✅ 工具过滤 |
 | Registry 持久化 | ✅ 完整 | ✅ 简化版 |
 | 生命周期事件 | ✅ gateway 事件 | ⚠️ 回调方式 |
-| 通告机制 | ✅ 自动发送 | ⚠️ 待完善 |
+| 通告机制 | ✅ 自动发送 | ✅ Debounce + Collect |
 | 跨 Agent spawn | ✅ 支持 | ❌ 未实现 |
 | 延迟归档 | ✅ sweeper | ✅ sweeper |
 
+## 通告机制（Announce Flow）
+
+Mini-Claw 实现了完整的 **Debounce + Collect** 通告模式，核心在 `src/agents/subagent/announce.ts`。
+
+### 单个 Subagent 完成
+
+```
+subagent 完成
+    │
+    ▼
+runAnnounceFlow()
+    │  读取子会话最后一条 assistant 消息作为 findings
+    ▼
+enqueueAnnounce()
+    │  入队 ANNOUNCE_QUEUES，启动 2s debounce 定时器
+    ▼
+(2s 无新结果)
+    │
+    ▼
+drainQueue() → buildTriggerMessage()
+    │  构建单条摘要消息
+    ▼
+gatewayRef.triggerAgent()
+    │  主 agent 运行中 → steer 模式注入
+    │  主 agent 空闲   → 重新唤起
+    ▼
+主 agent 生成自然语言摘要 → 回复用户
+```
+
+### 多个 Subagent 并发完成（Collect 模式）
+
+当多个 subagent 在 2 秒窗口内陆续完成时，结果会被聚合：
+
+```
+subagent A 完成 → enqueue → 重置 2s 定时器
+subagent B 完成 → enqueue → 重置 2s 定时器
+subagent C 完成 → enqueue → 重置 2s 定时器
+                                │
+                          (2s 无新结果)
+                                │
+                                ▼
+                    drainQueue() 检测队列 > 1 条
+                                │
+                                ▼
+                    buildCollectedTriggerMessage()
+                    合并所有结果为一条消息:
+                    ┌──────────────────────────────┐
+                    │ [3 background tasks completed]│
+                    │                              │
+                    │ --- Task 1: "A" (completed) --│
+                    │ findings...                   │
+                    │ --- Task 2: "B" (completed) --│
+                    │ findings...                   │
+                    │ --- Task 3: "C" (completed) --│
+                    │ findings...                   │
+                    │                              │
+                    │ Summarize all findings...     │
+                    └──────────────────────────────┘
+                                │
+                                ▼
+                    gatewayRef.triggerAgent() 一次性发送
+                                │
+                                ▼
+                    主 agent 综合所有结果回复用户
+```
+
+### 关键设计
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| `DEBOUNCE_MS` | 2000ms | 等待更多结果的窗口期 |
+| 队列键 | `requesterSessionKey` | 按请求者会话隔离队列 |
+| 防重入 | `draining` 标志 | 防止并发 drain |
+
+### triggerAgent 的两种路径
+
+通过 `gateway-ref.ts` 的 `triggerAgent()` 方法：
+
+- **steered** — 主 agent 正在运行，消息以 `[INTERRUPT]` 前缀注入当前对话上下文
+- **invoked** — 主 agent 空闲，重新唤起一轮 LLM 调用处理结果
+
+主 agent 收到的 trigger 消息末尾附带指令：*"Summarize this naturally for the user. Keep it brief."*，因此用户看到的是自然语言摘要而非原始数据。
+
+### 错误处理
+
+subagent 执行失败时同样走 announce 流程，`outcome.status` 为 `"error"`，trigger 消息中包含错误信息，主 agent 会据此告知用户任务失败原因。
+
+### 空闲唤醒：Mini-Claw vs OpenClaw（Heartbeat）
+
+Mini-Claw 在主 agent 空闲时直接调用 `processMessage()` 发起一轮完整的 agent 调用。OpenClaw 则通过 **Heartbeat + SystemEvent** 机制实现更精细的控制。
+
+**OpenClaw 的 Heartbeat 路径：**
+
+```
+后台任务完成
+  → enqueueSystemEvent()        ← 事件入队（不直接发给 agent）
+  → requestHeartbeatNow()       ← 请求即时心跳（250ms 合并窗口）
+    → runHeartbeatOnce()        ← 心跳运行器
+      → LLM 看到 SystemEvent + 专用 prompt
+      → LLM 判断是否值得通知
+        → 不值得 → 回复 HEARTBEAT_OK → 静默吞掉
+        → 值得   → 回复摘要 → 投递到用户 channel
+```
+
+**Mini-Claw 的简化路径：**
+
+```
+subagent 完成
+  → enqueueAnnounce()           ← 入队 + 2s debounce
+  → drainQueue()
+    → triggerAgent()
+      → processMessage()        ← 直接发起完整 agent 调用，无过滤
+      → agent 必定回复用户
+```
+
+**差异对比：**
+
+| | OpenClaw (Heartbeat) | Mini-Claw (直接调用) |
+|---|---|---|
+| **LLM 过滤** | 有，LLM 可回复 `HEARTBEAT_OK` 静默 | 无，每次都完整推理并回复 |
+| **活跃时段** | 尊重 `activeHours`，半夜不打扰 | 无，随时触发 |
+| **队列冲突** | 主通道忙时跳过，稍后重试 | 无检查，可能和用户消息并发 |
+| **事件合并** | 250ms 合并窗口 | 2s debounce（更粗粒度） |
+| **成本控制** | 能跳过就跳过，省 token | 每次都完整调用 |
+| **通知决策权** | LLM 自主判断值不值得通知 | 无过滤，一律通知 |
+
+> **注意**：Mini-Claw 当前的实现是有意简化。如需对齐 OpenClaw 行为，需引入 `heartbeat-wake` + `SystemEvent` 基础设施，让 LLM 自己决定"这个结果值不值得通知用户"。详见 `docs/openclaw-async-tools.md` 第七节。
+
 ## 待完善功能
 
-1. **Gateway 集成** - 将 subagent 运行集成到 Gateway 消息流
-2. **通告发送** - 完成后自动发送结果到请求者
-3. **跨 Agent spawn** - 支持指定不同的 agent 配置
-4. **并发控制** - 限制最大并发 subagent 数量
+1. **Heartbeat 集成** - 引入 Heartbeat + SystemEvent 机制，空闲唤醒时让 LLM 过滤噪音
+2. **跨 Agent spawn** - 支持指定不同的 agent 配置
+3. **并发控制** - 限制最大并发 subagent 数量
