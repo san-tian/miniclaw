@@ -1,0 +1,28 @@
+{
+  "name": "mini-claw",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "gateway": "bun src/entry.ts gateway",
+    "agent": "bun src/entry.ts agent",
+    "cron": "bun src/entry.ts cron",
+    "telegram": "bun src/entry.ts telegram"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "composio-core": "^0.5.39",
+    "cron": "^3.1.7",
+    "grammy": "^1.39.3",
+    "https-proxy-agent": "^7.0.6",
+    "uuid": "^10.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.5.12",
+    "bun-types": "^1.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.5.0"
+  }
+}

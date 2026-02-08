@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "createdAt": 0,
+    "updatedAt": 0
+  },
+  "gateway": {
+    "port": 18789,
+    "host": "0.0.0.0"
+  },
+  "providers": {
+    "providers": {
+      "default": {
+        "id": "default",
+        "name": "OpenAI",
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKey": "YOUR_API_KEY_HERE",
+        "format": "openai",
+        "models": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+        "createdAt": 0,
+        "updatedAt": 0
+      }
+    },
+    "defaultProviderId": "default"
+  }
+}

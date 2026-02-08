@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini-Claw</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #252525;
+      --bg-hover: #2a2a2a;
+      --bg-active: #333333;
+      --border-color: #333333;
+      --border-light: #404040;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --accent-primary: #ff6b6b;
+      --accent-secondary: #4ecdc4;
+      --accent-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .sidebar-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .settings-btn {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .settings-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-light);
+    }
+
+    .sidebar-section {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-section h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    /* Select */
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:hover { border-color: var(--border-light); }
+    select:focus { outline: none; border-color: var(--accent-primary); }
+
+    /* Items */
+    .item {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .item:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-color);
+    }
+
+    .item.active {
+      background: var(--bg-active);
+      border-color: var(--accent-primary);
+    }
+
+    .item-title {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .item-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--accent-gradient);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-light);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg-primary);
+    }
+
+    .chat-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .chat-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chat-header .meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: linear-gradient(180deg, var(--bg-primary) 0%, #0a0a0a 100%);
+    }
+
+    .message {
+      margin-bottom: 20px;
+      max-width: 75%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      margin-left: auto;
+    }
+
+    .message-content {
+      padding: 14px 18px;
+      border-radius: var(--radius-lg);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 14px;
+    }
+
+    .message.user .message-content {
+      background: var(--accent-gradient);
+      color: white;
+      border-bottom-right-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+    }
+
+    .message.assistant .message-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: var(--radius-sm);
+    }
+
+    .message-role {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .message.user .message-role { text-align: right; }
+
+    /* Tool calls */
+    .tool-call {
+      display: block;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+      white-space: normal;
+    }
+
+    .tool-call-name {
+      color: var(--accent-secondary);
+      font-weight: 600;
+    }
+
+    .tool-input {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .tool-param {
+      color: var(--accent-primary);
+    }
+
+    .tool-result {
+      display: block;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-left: 3px solid var(--accent-secondary);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      margin: 4px 0 10px 0;
+      font-size: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--text-muted);
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .tool-result-label {
+      color: var(--accent-secondary);
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    /* Input */
+    .input-area {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+    }
+
+    .input-row input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Status */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+    }
+
+    .status-dot.typing {
+      background: var(--warning);
+      animation: pulse 1s infinite;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      width: 480px;
+      max-width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+      max-width: 280px;
+    }
+
+    /* Settings tabs */
+    .settings-tabs {
+      display: flex;
+      gap: 0;
+      margin: 20px 0 0 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s ease;
+    }
+
+    .settings-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .settings-tab.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+
+    /* New session button */
+    .new-session-btn {
+      width: 100%;
+      margin-top: 12px;
+      justify-content: center;
+    }
+
+    /* Delete button in session list */
+    .delete-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .item:hover .delete-btn {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">🦀</div>
+      <h1>Mini-Claw</h1>
+      <button class="settings-btn" onclick="showModal('settings')" title="Settings">⚙️</button>
+    </div>
+
+    <!-- Agent selector -->
+    <div class="sidebar-section">
+      <h3>Agent</h3>
+      <select id="agent-select">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <!-- Channel filter -->
+    <div class="sidebar-section">
+      <h3>Channel</h3>
+      <select id="channel-filter" onchange="loadSessions()">
+        <option value="">All Channels</option>
+        <option value="websocket">WebSocket</option>
+        <option value="web">Web</option>
+        <option value="cron">Cron</option>
+        <option value="telegram">Telegram</option>
+        <option value="discord">Discord</option>
+        <option value="slack">Slack</option>
+      </select>
+    </div>
+
+    <!-- Sessions -->
+    <div class="sidebar-section" style="flex: 0; padding-bottom: 0; border-bottom: none;">
+      <h3>Sessions</h3>
+    </div>
+    <div class="sidebar-list" id="session-list">
+      <!-- Sessions will be loaded here -->
+    </div>
+    <div style="padding: 12px 20px; border-top: 1px solid var(--border-color);">
+      <button class="btn btn-primary new-session-btn" onclick="createSession()">+ New Session</button>
+    </div>
+  </div>
+
+  <!-- Main chat area -->
+  <div class="main">
+    <div class="chat-header" id="chat-header">
+      <h2>Select a session</h2>
+      <div class="meta">Choose or create a session to start chatting</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="empty-state">
+        <div class="empty-state-icon">💬</div>
+        <p>Select a session to view messages</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <input type="text" id="message-input" placeholder="Type your message..." disabled>
+        <button class="btn btn-primary" id="send-btn" onclick="sendMessage()" disabled>Send</button>
+      </div>
+      <div class="status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Disconnected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settings-modal">
+    <div class="modal" style="width: 680px;">
+      <h3>Settings</h3>
+
+      <!-- Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="providers" onclick="switchSettingsTab('providers')">Providers</button>
+        <button class="settings-tab" data-tab="agents" onclick="switchSettingsTab('agents')">Agents</button>
+        <button class="settings-tab" data-tab="bindings" onclick="switchSettingsTab('bindings')">Routing</button>
+        <button class="settings-tab" data-tab="cron" onclick="switchSettingsTab('cron')">Cron</button>
+      </div>
+
+      <!-- Providers Tab -->
+      <div id="settings-tab-providers" class="settings-tab-content">
+        <div style="margin: 20px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span style="font-size: 13px; color: var(--text-muted);">Configure LLM providers and API keys</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddProvider()">+ Add Provider</button>
+          </div>
+          <div id="provider-list" style="max-height: 280px; overflow-y: auto;">
+            <!-- Providers will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add Provider Form (hidden by default) -->
+        <div id="add-provider-form" style="display: none; border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+          <h4 id="provider-form-title" style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px;">Add New Provider</h4>
+          <input type="hidden" id="provider-form-id" value="">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="provider-name" placeholder="OpenAI / Claude / Custom">
+          </div>
+          <div class="form-group">
+            <label>Base URL</label>
+            <input type="text" id="provider-baseurl" placeholder="https://api.openai.com/v1">
+          </div>
+          <div class="form-group">
+            <label>API Key (leave empty to keep existing when editing)</label>
+            <input type="password" id="provider-apikey" placeholder="sk-...">
+          </div>
+          <div class="form-group">
+            <label>Format</label>
+            <select id="provider-format">
+              <option value="openai">OpenAI Compatible</option>
+              <option value="claude">Claude (Anthropic)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Models (comma separated)</label>
+            <input type="text" id="provider-models" placeholder="gpt-4o, gpt-4-turbo, gpt-3.5-turbo">
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="hideAddProvider()">Cancel</button>
+            <button id="provider-save-btn" class="btn btn-primary" onclick="saveProvider()">Save Provider</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agents Tab -->
+      <div id="settings-tab-agents" class="settings-tab-content" style="display: none;">
+        <div style="margin: 20px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span style="font-size: 13px; color: var(--text-muted);">Manage AI agents and their configurations</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddAgent()">+ Add Agent</button>
+          </div>
+          <div id="agents-list" style="max-height: 280px; overflow-y: auto;">
+            <!-- Agents will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add Agent Form (hidden by default) -->
+        <div id="add-agent-form" style="display: none; border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+          <h4 id="agent-form-title" style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px;">Add New Agent</h4>
+          <input type="hidden" id="agent-form-id" value="">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="agent-name-input" placeholder="My Agent">
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <select id="agent-model-input">
+              <option value="">Loading models...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Or enter custom model</label>
+            <input type="text" id="agent-model-custom" placeholder="gpt-4o (leave empty to use selection above)">
+          </div>
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <input type="text" id="agent-desc-input" placeholder="A helpful assistant">
+          </div>
+          <div class="form-group">
+            <label>System Prompt (optional)</label>
+            <textarea id="agent-system-prompt" rows="6" placeholder="You are a helpful AI assistant..." style="width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px; font-family: inherit; resize: vertical; transition: all 0.2s ease;"></textarea>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Define the agent's personality, capabilities, and behavior. Leave empty to use default.</div>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="hideAddAgent()">Cancel</button>
+            <button id="agent-save-btn" class="btn btn-primary" onclick="saveAgent()">Save Agent</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bindings (Routing) Tab -->
+      <div id="settings-tab-bindings" class="settings-tab-content" style="display: none;">
+        <div style="margin: 20px 0;">
+
+          <!-- Simple explanation -->
+          <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+            <div style="font-weight: 600; margin-bottom: 10px; color: var(--accent-secondary);">What is Routing?</div>
+            <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.7;">
+              Routing lets you assign different Agents to handle messages from different sources.<br><br>
+              <strong style="color: var(--text-primary);">Example:</strong> Telegram messages → Work Agent, Discord messages → Gaming Agent
+            </div>
+          </div>
+
+          <!-- Quick add buttons -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Quick Add:</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="quickAddBinding('telegram')">+ Telegram</button>
+              <button class="btn btn-secondary btn-sm" onclick="quickAddBinding('discord')">+ Discord</button>
+              <button class="btn btn-secondary btn-sm" onclick="quickAddBinding('slack')">+ Slack</button>
+              <button class="btn btn-secondary btn-sm" onclick="showAddBinding()">+ Custom...</button>
+            </div>
+          </div>
+
+          <div id="bindings-list" style="max-height: 220px; overflow-y: auto;">
+            <!-- Bindings will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add Binding Form (hidden by default) -->
+        <div id="add-binding-form" style="display: none; border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+          <h4 id="binding-form-title" style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px;">Add New Binding</h4>
+          <input type="hidden" id="binding-form-id" value="">
+          <div class="form-group">
+            <label>Channel</label>
+            <select id="binding-channel" onchange="updateBindingMatchFields()">
+              <option value="websocket">WebSocket (Web UI)</option>
+              <option value="telegram">Telegram</option>
+              <option value="discord">Discord</option>
+              <option value="slack">Slack</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Agent</label>
+            <select id="binding-agent">
+              <option value="">Loading agents...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Match Type</label>
+            <select id="binding-match-type" onchange="updateBindingMatchFields()">
+              <option value="channel">All messages from this channel</option>
+              <option value="peer">Specific user or group</option>
+              <option value="guild">Discord server</option>
+              <option value="team">Slack workspace</option>
+            </select>
+          </div>
+          <div id="binding-match-fields">
+            <!-- Dynamic fields based on match type -->
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="hideAddBinding()">Cancel</button>
+            <button id="binding-save-btn" class="btn btn-primary" onclick="saveBinding()">Save Binding</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cron Tab -->
+      <div id="settings-tab-cron" class="settings-tab-content" style="display: none;">
+        <div style="margin: 20px 0;">
+
+          <!-- Simple explanation -->
+          <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+            <div style="font-weight: 600; margin-bottom: 10px; color: var(--accent-secondary);">What is Cron?</div>
+            <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.7;">
+              Cron jobs let you schedule messages to be sent at specific times.<br><br>
+              <strong style="color: var(--text-primary);">Examples:</strong><br>
+              <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">*/5 * * * *</code> = Every 5 minutes<br>
+              <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">0 9 * * *</code> = Every day at 9:00 AM<br>
+              <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">0 9 * * 1</code> = Every Monday at 9:00 AM
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span style="font-size: 13px; color: var(--text-muted);">Scheduled tasks</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddCron()">+ Add Cron Job</button>
+          </div>
+
+          <div id="cron-list" style="max-height: 220px; overflow-y: auto;">
+            <!-- Cron jobs will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add Cron Form (hidden by default) -->
+        <div id="add-cron-form" style="display: none; border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+          <h4 id="cron-form-title" style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px;">Add New Cron Job</h4>
+          <input type="hidden" id="cron-form-id" value="">
+          <div class="form-group">
+            <label>Name (optional)</label>
+            <input type="text" id="cron-name" placeholder="e.g., Daily Report">
+          </div>
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <input type="text" id="cron-description" placeholder="What does this job do?">
+          </div>
+          <div class="form-group">
+            <label>Schedule (cron expression)</label>
+            <input type="text" id="cron-schedule" placeholder="*/5 * * * * (every 5 minutes)">
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea id="cron-message" rows="3" placeholder="What should the agent do when this job triggers?"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Agent (optional)</label>
+            <select id="cron-agent">
+              <option value="">Default Agent</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Channel (optional)</label>
+            <select id="cron-channel">
+              <option value="">Default (WebSocket)</option>
+              <option value="telegram">Telegram</option>
+              <option value="websocket">WebSocket</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target (optional, e.g., chat ID for Telegram)</label>
+            <input type="text" id="cron-to" placeholder="Leave empty for default">
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="hideAddCron()">Cancel</button>
+            <button id="cron-save-btn" class="btn btn-primary" onclick="saveCron()">Save Cron Job</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideModal('settings')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 自动检测 API 和 WebSocket 地址（共享同一端口）
+    const currentHost = window.location.hostname
+    const currentPort = window.location.port
+
+    const API_URL = currentPort
+      ? `${window.location.protocol}//${currentHost}:${currentPort}`
+      : `${window.location.protocol}//${currentHost}`
+    const WS_URL = currentPort
+      ? `ws://${currentHost}:${currentPort}`
+      : `ws://${currentHost}`
+
+    console.log('API URL:', API_URL)
+    console.log('WebSocket URL:', WS_URL)
+
+    let ws = null
+    let currentSession = null
+    let agents = []
+    let sessions = []
+    let providers = []
+    let bindings = []
+    let defaultAgentId = null
+    let defaultSystemPrompt = ''
+
+    // Initialize
+    async function init() {
+      await loadProviders()
+      await loadAgents()
+      await loadBindings()
+      await loadSessions()
+      await loadDefaultSystemPrompt()
+      connectWebSocket()
+    }
+
+    // Load default system prompt
+    async function loadDefaultSystemPrompt() {
+      try {
+        const res = await fetch(`${API_URL}/api/agents/defaults/system-prompt`)
+        const data = await res.json()
+        defaultSystemPrompt = data.defaultPrompt || ''
+      } catch (e) {
+        console.error('Failed to load default system prompt:', e)
+      }
+    }
+
+    // ========== Provider Management ==========
+    async function loadProviders() {
+      try {
+        const res = await fetch(`${API_URL}/api/providers`)
+        const data = await res.json()
+        providers = data.providers
+      } catch (e) {
+        console.error('Failed to load providers:', e)
+      }
+    }
+
+    function renderProviders() {
+      const list = document.getElementById('provider-list')
+      if (providers.length === 0) {
+        list.innerHTML = '<p style="color: #888; padding: 12px;">No providers configured</p>'
+        return
+      }
+
+      list.innerHTML = providers.map(p => {
+        return `
+        <div class="item" style="display: flex; flex-direction: column; gap: 8px;">
+          <div>
+            <div class="item-title">${p.name} ${p.isDefault ? '<span class="item-badge">Default</span>' : ''}</div>
+            <div class="item-meta">${p.baseUrl} · ${p.models.length} models · Key: <code style="font-size: 11px;">${p.apiKey || 'not set'}</code></div>
+          </div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="editProvider('${p.id}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyProvider('${p.id}')">Copy</button>
+            ${!p.isDefault ? `<button class="btn btn-secondary btn-sm" onclick="setDefaultProvider('${p.id}')">Set Default</button>` : ''}
+            ${!p.isDefault ? `<button class="btn btn-secondary btn-sm" onclick="deleteProvider('${p.id}')" style="color: var(--accent-primary);">Delete</button>` : ''}
+          </div>
+        </div>
+      `}).join('')
+    }
+
+    function copyProvider(id) {
+      const provider = providers.find(p => p.id === id)
+      if (!provider) return
+
+      document.getElementById('add-provider-form').style.display = 'block'
+      document.getElementById('provider-form-title').textContent = 'Copy Provider'
+      document.getElementById('provider-save-btn').textContent = 'Save Copy'
+      document.getElementById('provider-form-id').value = ''
+      document.getElementById('provider-name').value = provider.name + ' (Copy)'
+      document.getElementById('provider-baseurl').value = provider.baseUrl
+      document.getElementById('provider-apikey').value = ''
+      document.getElementById('provider-format').value = provider.format
+      document.getElementById('provider-models').value = provider.models.join(', ')
+    }
+
+    function showAddProvider() {
+      document.getElementById('add-provider-form').style.display = 'block'
+      document.getElementById('provider-form-title').textContent = 'Add New Provider'
+      document.getElementById('provider-save-btn').textContent = 'Save Provider'
+      document.getElementById('provider-form-id').value = ''
+    }
+
+    function hideAddProvider() {
+      document.getElementById('add-provider-form').style.display = 'none'
+      // Clear form
+      document.getElementById('provider-form-id').value = ''
+      document.getElementById('provider-name').value = ''
+      document.getElementById('provider-baseurl').value = ''
+      document.getElementById('provider-apikey').value = ''
+      document.getElementById('provider-apikey').placeholder = 'sk-...'
+      document.getElementById('provider-models').value = ''
+    }
+
+    function editProvider(id) {
+      const provider = providers.find(p => p.id === id)
+      if (!provider) return
+
+      document.getElementById('add-provider-form').style.display = 'block'
+      document.getElementById('provider-form-title').textContent = 'Edit Provider'
+      document.getElementById('provider-save-btn').textContent = 'Update Provider'
+      document.getElementById('provider-form-id').value = id
+      document.getElementById('provider-name').value = provider.name
+      document.getElementById('provider-baseurl').value = provider.baseUrl
+      document.getElementById('provider-apikey').value = ''
+      document.getElementById('provider-apikey').placeholder = provider.apiKey || 'Leave empty to keep current key'
+      document.getElementById('provider-format').value = provider.format
+      document.getElementById('provider-models').value = provider.models.join(', ')
+    }
+
+    async function saveProvider() {
+      const id = document.getElementById('provider-form-id').value
+      const name = document.getElementById('provider-name').value
+      const baseUrl = document.getElementById('provider-baseurl').value
+      const apiKey = document.getElementById('provider-apikey').value
+      const format = document.getElementById('provider-format').value
+      const modelsStr = document.getElementById('provider-models').value
+      const models = modelsStr.split(',').map(m => m.trim()).filter(m => m)
+
+      if (!name || !baseUrl) {
+        alert('Name and Base URL are required')
+        return
+      }
+
+      // For new provider, API key is required
+      if (!id && !apiKey) {
+        alert('API Key is required for new provider')
+        return
+      }
+
+      try {
+        const body = { name, baseUrl, format, models }
+        if (apiKey) body.apiKey = apiKey // Only include if provided
+
+        if (id) {
+          // Update existing provider
+          await fetch(`${API_URL}/api/providers/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+        } else {
+          // Create new provider
+          await fetch(`${API_URL}/api/providers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...body, apiKey })
+          })
+        }
+        hideAddProvider()
+        await loadProviders()
+        renderProviders()
+      } catch (e) {
+        console.error('Failed to save provider:', e)
+        alert('Failed to save provider')
+      }
+    }
+
+    async function setDefaultProvider(id) {
+      try {
+        await fetch(`${API_URL}/api/providers/${id}/set-default`, { method: 'POST' })
+        await loadProviders()
+        renderProviders()
+      } catch (e) {
+        console.error('Failed to set default provider:', e)
+      }
+    }
+
+    async function deleteProvider(id) {
+      if (!confirm('Delete this provider?')) return
+      try {
+        await fetch(`${API_URL}/api/providers/${id}`, { method: 'DELETE' })
+        await loadProviders()
+        renderProviders()
+      } catch (e) {
+        console.error('Failed to delete provider:', e)
+      }
+    }
+
+    // WebSocket
+    function connectWebSocket() {
+      ws = new WebSocket(WS_URL)
+
+      ws.onopen = () => {
+        updateStatus('connected', 'Connected')
+        document.getElementById('message-input').disabled = !currentSession
+        document.getElementById('send-btn').disabled = !currentSession
+        // Re-register session after reconnect so async messages (subagent results) can reach us
+        if (currentSession?.sessionKey) {
+          ws.send(JSON.stringify({ type: 'switch_session', sessionKey: currentSession.sessionKey }))
+        }
+      }
+
+      ws.onclose = () => {
+        updateStatus('disconnected', 'Disconnected')
+        document.getElementById('message-input').disabled = true
+        document.getElementById('send-btn').disabled = true
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000)
+      }
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        handleWSMessage(data)
+      }
+    }
+
+    function handleWSMessage(data) {
+      console.log('[WS] received:', data.type, data.type === 'reply' ? ('text=' + (data.text || '').slice(0, 100)) : '', 'hasAssistantMsg:', !!currentAssistantMessage)
+      switch (data.type) {
+        case 'connected':
+          console.log('WebSocket connected, clientId:', data.clientId)
+          break
+        case 'session_switched':
+          console.log('Switched to session:', data.sessionKey)
+          break
+        case 'chunk':
+          appendChunk(data.text)
+          break
+        case 'tool_call':
+          appendToolCall(data.name, data.input)
+          break
+        case 'tool_result':
+          appendToolResult(data.name, data.output)
+          break
+        case 'reply':
+          finalizeAssistantMessage(data.text)
+          break
+      }
+    }
+
+    // API calls
+    async function loadAgents() {
+      try {
+        const res = await fetch(`${API_URL}/api/agents`)
+        const data = await res.json()
+        agents = data.agents
+        defaultAgentId = data.defaultAgentId
+
+        const select = document.getElementById('agent-select')
+        select.innerHTML = agents.map(a =>
+          `<option value="${a.agentId}" ${a.agentId === data.defaultAgentId ? 'selected' : ''}>
+            ${a.name} (${a.model})
+          </option>`
+        ).join('')
+      } catch (e) {
+        console.error('Failed to load agents:', e)
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        // 根据 channel filter 加载 sessions
+        const channelFilter = document.getElementById('channel-filter')?.value || ''
+        const params = new URLSearchParams()
+        if (channelFilter) params.set('channel', channelFilter)
+        const res = await fetch(`${API_URL}/api/sessions?${params}`)
+        const data = await res.json()
+        sessions = data.sessions
+        renderSessions()
+      } catch (e) {
+        console.error('Failed to load sessions:', e)
+      }
+    }
+
+    // Channel 图标映射
+    const channelIcons = {
+      'websocket': '🔌',
+      'web': '🌐',
+      'cron': '⏰',
+      'telegram': '✈️',
+      'discord': '💬',
+      'slack': '💼',
+    }
+
+    function renderSessions() {
+      const list = document.getElementById('session-list')
+      if (sessions.length === 0) {
+        list.innerHTML = '<div class="empty-state" style="padding: 40px 20px;"><div class="empty-state-icon">📝</div><p>No sessions yet</p></div>'
+        return
+      }
+
+      list.innerHTML = sessions.map(s => {
+        const agent = agents.find(a => a.agentId === s.agentId)
+        const agentName = agent?.name || s.agentId || 'Unknown'
+        const channelIcon = channelIcons[s.channel] || '💬'
+        const channelName = s.channel || 'unknown'
+        const shortId = s.sessionId.slice(0, 8)
+        return `
+        <div class="item ${currentSession?.sessionId === s.sessionId ? 'active' : ''}"
+             style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div onclick="selectSession('${s.sessionId}')" style="flex: 1; cursor: pointer; min-width: 0;">
+            <div class="item-title">${channelIcon} ${s.title || 'Untitled'}</div>
+            <div class="item-meta">
+              <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px; font-size: 10px; cursor: pointer;" onclick="event.stopPropagation(); copyToClipboard('${s.sessionId}')" title="Click to copy full ID: ${s.sessionId}">${shortId}</code>
+              · <span style="color: var(--accent-secondary);">${channelName}</span> · <span style="color: var(--accent-primary);">${agentName}</span> · ${s.messageCount} msgs · ${formatDate(s.updatedAt)}
+            </div>
+          </div>
+          <button class="btn btn-icon delete-btn" onclick="event.stopPropagation(); deleteSession('${s.sessionId}')"
+                  style="background: transparent; color: var(--text-muted);" title="Delete session">✕</button>
+        </div>
+      `}).join('')
+    }
+
+    async function deleteSession(sessionId) {
+      if (!confirm('Delete this session?')) return
+      try {
+        await fetch(`${API_URL}/api/sessions/${sessionId}`, { method: 'DELETE' })
+        if (currentSession?.sessionId === sessionId) {
+          currentSession = null
+          document.getElementById('chat-header').innerHTML = `
+            <h2>Select a session</h2>
+            <div class="meta">Choose or create a session to start chatting</div>
+          `
+          document.getElementById('messages').innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">💬</div>
+              <p>Select a session to view messages</p>
+            </div>
+          `
+          document.getElementById('message-input').disabled = true
+          document.getElementById('send-btn').disabled = true
+        }
+        await loadSessions()
+      } catch (e) {
+        console.error('Failed to delete session:', e)
+        alert('Failed to delete session')
+      }
+    }
+
+    async function selectSession(sessionId) {
+      try {
+        const res = await fetch(`${API_URL}/api/sessions/${sessionId}/messages`)
+        const data = await res.json()
+        currentSession = data.session
+
+        // Update header
+        const header = document.getElementById('chat-header')
+        const agent = agents.find(a => a.agentId === currentSession.agentId)
+        const channelIcon = channelIcons[currentSession.channel] || '💬'
+        const channelName = currentSession.channel || 'unknown'
+        header.innerHTML = `
+          <h2>${channelIcon} ${currentSession.title || 'Untitled Session'}</h2>
+          <div class="meta">
+            <code style="background: var(--bg-tertiary); padding: 1px 6px; border-radius: 4px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard('${currentSession.sessionId}')" title="Click to copy Session ID">${currentSession.sessionId}</code>
+            · Channel: ${channelName} · Agent: ${agent?.name || currentSession.agentId} · ${currentSession.messageCount} messages
+          </div>
+        `
+
+        // Render messages
+        renderMessages(data.messages)
+
+        // Enable input
+        document.getElementById('message-input').disabled = false
+        document.getElementById('send-btn').disabled = false
+
+        // Switch WebSocket session
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'switch_session', sessionKey: currentSession.sessionKey }))
+        }
+
+        // Update sidebar
+        renderSessions()
+      } catch (e) {
+        console.error('Failed to load session:', e)
+      }
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('messages')
+      const filtered = messages.filter(m => m.role !== 'system')
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><p>Start the conversation!</p></div>'
+        return
+      }
+
+      // Build a map of tool results by tool_call_id
+      const toolResults = new Map()
+      filtered.filter(m => m.role === 'tool').forEach(m => {
+        if (m.tool_call_id) toolResults.set(m.tool_call_id, m.content)
+      })
+
+      container.innerHTML = filtered.filter(m => m.role !== 'tool').map(m => {
+        let contentHtml = escapeHtml(m.content || '')
+        // Render tool calls inline for assistant messages
+        if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+          const toolHtml = m.tool_calls.map(tc => {
+            const fn = tc.function || {}
+            const name = fn.name || 'unknown'
+            let inputDisplay = ''
+            try {
+              const args = JSON.parse(fn.arguments || '{}')
+              const keys = Object.keys(args)
+              if (keys.length > 0) {
+                inputDisplay = keys.map(k => {
+                  const v = args[k]
+                  const dv = typeof v === 'string' && v.length > 50 ? v.slice(0, 50) + '...' : v
+                  return `<span class="tool-param">${escapeHtml(k)}:</span> ${escapeHtml(String(dv))}`
+                }).join(', ')
+              }
+            } catch {}
+            const resultText = toolResults.get(tc.id)
+            const resultHtml = resultText
+              ? `<div class="tool-result"><div class="tool-result-label">✅ ${escapeHtml(name)} result</div>${escapeHtml(resultText.slice(0, 500))}</div>`
+              : ''
+            return `<div class="tool-call"><span class="tool-call-name">🔧 ${escapeHtml(name)}</span>${inputDisplay ? `<div class="tool-input">${inputDisplay}</div>` : ''}</div>${resultHtml}`
+          }).join('')
+          contentHtml = contentHtml + toolHtml
+        }
+        return `<div class="message ${m.role}">
+          <div class="message-role">${m.role === 'user' ? 'You' : 'Assistant'}</div>
+          <div class="message-content">${contentHtml}</div>
+        </div>`
+      }).join('')
+
+      container.scrollTop = container.scrollHeight
+    }
+
+    async function createSession() {
+      const agentId = document.getElementById('agent-select').value
+      try {
+        const res = await fetch(`${API_URL}/api/sessions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId, title: 'New Chat' })
+        })
+        const data = await res.json()
+        await loadSessions()
+        selectSession(data.session.sessionId)
+      } catch (e) {
+        console.error('Failed to create session:', e)
+      }
+    }
+
+    // Chat
+    let currentAssistantMessage = null
+
+    function sendMessage() {
+      const input = document.getElementById('message-input')
+      const text = input.value.trim()
+      if (!text || !currentSession) return
+
+      // Add user message to UI
+      addMessage('user', text)
+      input.value = ''
+
+      // Send via WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'message',
+          text,
+          sessionId: currentSession.sessionId,
+          agentId: currentSession.agentId
+        }))
+        updateStatus('typing', 'Thinking...')
+
+        // Prepare for assistant response
+        currentAssistantMessage = addMessage('assistant', '')
+      }
+    }
+
+    function addMessage(role, content) {
+      const container = document.getElementById('messages')
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.empty-state')
+      if (emptyState) emptyState.remove()
+
+      const div = document.createElement('div')
+      div.className = `message ${role}`
+      div.innerHTML = `
+        <div class="message-role">${role === 'user' ? 'You' : 'Assistant'}</div>
+        <div class="message-content">${escapeHtml(content)}</div>
+      `
+      container.appendChild(div)
+      container.scrollTop = container.scrollHeight
+      return div
+    }
+
+    function appendChunk(text) {
+      if (currentAssistantMessage) {
+        const content = currentAssistantMessage.querySelector('.message-content')
+        // Find or create a text span to append to (avoids destroying tool-call DOM nodes)
+        let textSpan = content.querySelector('.text-chunk:last-child')
+        if (!textSpan || textSpan.nextElementSibling) {
+          textSpan = document.createElement('span')
+          textSpan.className = 'text-chunk'
+          content.appendChild(textSpan)
+        }
+        textSpan.textContent += text
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight
+      }
+    }
+
+    function appendToolCall(name, input) {
+      if (currentAssistantMessage) {
+        const content = currentAssistantMessage.querySelector('.message-content')
+        const toolDiv = document.createElement('div')
+        toolDiv.className = 'tool-call'
+
+        // Format input for display
+        let inputDisplay = ''
+        if (input && typeof input === 'object') {
+          const keys = Object.keys(input)
+          if (keys.length > 0) {
+            inputDisplay = keys.map(k => {
+              const v = input[k]
+              const displayVal = typeof v === 'string' && v.length > 50 ? v.slice(0, 50) + '...' : String(v)
+              return `<span class="tool-param">${escapeHtml(k)}:</span> ${escapeHtml(displayVal)}`
+            }).join(', ')
+          }
+        }
+
+        toolDiv.innerHTML = `<span class="tool-call-name">🔧 ${escapeHtml(name)}</span>${inputDisplay ? `<div class="tool-input">${inputDisplay}</div>` : ''}`
+        content.appendChild(toolDiv)
+      }
+    }
+
+    function appendToolResult(name, output) {
+      if (currentAssistantMessage) {
+        const content = currentAssistantMessage.querySelector('.message-content')
+        const resultDiv = document.createElement('div')
+        resultDiv.className = 'tool-result'
+        resultDiv.innerHTML = `<div class="tool-result-label">✅ ${escapeHtml(name)} result</div>${escapeHtml(output || '')}`
+        content.appendChild(resultDiv)
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight
+      }
+    }
+
+    function finalizeAssistantMessage(text) {
+      console.log('[finalizeAssistantMessage] called, text length:', text?.length, 'hasCurrentMsg:', !!currentAssistantMessage)
+      if (currentAssistantMessage) {
+        const content = currentAssistantMessage.querySelector('.message-content')
+        // Check if there's any real text content (not just tool calls)
+        const hasTextContent = content.querySelector('.text-chunk')
+        if (!hasTextContent && text) {
+          const textSpan = document.createElement('span')
+          textSpan.className = 'text-chunk'
+          textSpan.textContent = text
+          content.appendChild(textSpan)
+        }
+        currentAssistantMessage = null
+      } else if (text) {
+        // Async message (e.g. subagent result) arrived after main turn completed.
+        // Create a new assistant bubble to display it.
+        console.log('[finalizeAssistantMessage] Creating new bubble for async message')
+        addMessage('assistant', text)
+      }
+      updateStatus('connected', 'Connected')
+      loadSessions() // Refresh session list
+    }
+
+    // UI helpers
+    function showModal(type) {
+      document.getElementById(`${type}-modal`).classList.remove('hidden')
+      if (type === 'settings') {
+        renderProviders()
+        renderAgentsList()
+        renderBindingsList()
+        renderCronList()
+        loadAgentModelOptions()
+      }
+    }
+
+    function switchSettingsTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.settings-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab)
+      })
+      // Update tab content
+      document.getElementById('settings-tab-providers').style.display = tab === 'providers' ? 'block' : 'none'
+      document.getElementById('settings-tab-agents').style.display = tab === 'agents' ? 'block' : 'none'
+      document.getElementById('settings-tab-bindings').style.display = tab === 'bindings' ? 'block' : 'none'
+      document.getElementById('settings-tab-cron').style.display = tab === 'cron' ? 'block' : 'none'
+      // Hide forms when switching tabs
+      hideAddProvider()
+      hideAddAgent()
+      hideAddBinding()
+      hideAddCron()
+    }
+
+    function showAddAgent() {
+      document.getElementById('add-agent-form').style.display = 'block'
+      document.getElementById('agent-form-title').textContent = 'Add New Agent'
+      document.getElementById('agent-save-btn').textContent = 'Save Agent'
+      document.getElementById('agent-form-id').value = ''
+      // Show default prompt as placeholder
+      const promptTextarea = document.getElementById('agent-system-prompt')
+      promptTextarea.placeholder = defaultSystemPrompt || 'You are a helpful AI assistant...'
+      loadAgentModelOptions()
+    }
+
+    function hideAddAgent() {
+      document.getElementById('add-agent-form').style.display = 'none'
+      document.getElementById('agent-form-id').value = ''
+      document.getElementById('agent-name-input').value = ''
+      document.getElementById('agent-model-custom').value = ''
+      document.getElementById('agent-desc-input').value = ''
+      document.getElementById('agent-system-prompt').value = ''
+    }
+
+    async function loadAgentModelOptions() {
+      const select = document.getElementById('agent-model-input')
+      try {
+        const res = await fetch(`${API_URL}/api/models`)
+        const data = await res.json()
+        if (data.models.length === 0) {
+          select.innerHTML = '<option value="">No models available - add a provider first</option>'
+        } else {
+          select.innerHTML = data.models.map(m =>
+            `<option value="${m.model}">${m.providerName}: ${m.model}</option>`
+          ).join('')
+        }
+      } catch (e) {
+        select.innerHTML = '<option value="">Failed to load models</option>'
+      }
+    }
+
+    async function saveAgent() {
+      const id = document.getElementById('agent-form-id').value
+      const name = document.getElementById('agent-name-input').value
+      const customModel = document.getElementById('agent-model-custom').value
+      const selectedModel = document.getElementById('agent-model-input').value
+      const model = customModel || selectedModel
+      const description = document.getElementById('agent-desc-input').value
+      const systemPrompt = document.getElementById('agent-system-prompt').value
+
+      if (!name || !model) {
+        alert('Name and model are required')
+        return
+      }
+
+      try {
+        const body = { name, model, description }
+        if (systemPrompt) body.systemPrompt = systemPrompt
+
+        if (id) {
+          // Update existing agent
+          await fetch(`${API_URL}/api/agents/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+        } else {
+          // Create new agent
+          await fetch(`${API_URL}/api/agents`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+        }
+        hideAddAgent()
+        await loadAgents()
+        renderAgentsList()
+      } catch (e) {
+        console.error('Failed to save agent:', e)
+        alert('Failed to save agent')
+      }
+    }
+
+    function editAgent(agentId) {
+      const agent = agents.find(a => a.agentId === agentId)
+      if (!agent) return
+
+      document.getElementById('add-agent-form').style.display = 'block'
+      document.getElementById('agent-form-title').textContent = 'Edit Agent'
+      document.getElementById('agent-save-btn').textContent = 'Update Agent'
+      document.getElementById('agent-form-id').value = agentId
+      document.getElementById('agent-name-input').value = agent.name
+      document.getElementById('agent-model-custom').value = agent.model
+      document.getElementById('agent-desc-input').value = agent.description || ''
+      document.getElementById('agent-system-prompt').value = agent.systemPrompt || ''
+    }
+
+    function renderAgentsList() {
+      const list = document.getElementById('agents-list')
+
+      if (agents.length === 0) {
+        list.innerHTML = '<p style="color: #888; padding: 12px;">No agents configured</p>'
+        return
+      }
+
+      list.innerHTML = agents.map(a => {
+        const isDefault = a.agentId === defaultAgentId
+        const hasPrompt = a.systemPrompt && a.systemPrompt.trim()
+        const promptPreview = hasPrompt ? a.systemPrompt.trim().replace(/\s+/g, ' ').slice(0, 80) + (a.systemPrompt.trim().length > 80 ? '…' : '') : ''
+        return `
+        <div class="item" style="display: flex; flex-direction: column; gap: 8px;">
+          <div>
+            <div class="item-title">
+              ${a.name}
+              ${isDefault ? '<span class="item-badge">Default</span>' : ''}
+            </div>
+            <div class="item-meta">${a.model}${a.description ? ' · ' + a.description : ''}</div>
+            ${hasPrompt ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;" title="${promptPreview}">${promptPreview}</div>` : ''}
+          </div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="editAgent('${a.agentId}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyAgent('${a.agentId}')">Copy</button>
+            ${!isDefault ? `<button class="btn btn-secondary btn-sm" onclick="setDefaultAgent('${a.agentId}')">Set Default</button>` : ''}
+            ${!isDefault ? `<button class="btn btn-secondary btn-sm" onclick="deleteAgent('${a.agentId}')" style="color: var(--accent-primary);">Delete</button>` : ''}
+          </div>
+        </div>
+      `}).join('')
+    }
+
+    function copyAgent(agentId) {
+      const agent = agents.find(a => a.agentId === agentId)
+      if (!agent) return
+
+      document.getElementById('add-agent-form').style.display = 'block'
+      document.getElementById('agent-form-title').textContent = 'Copy Agent'
+      document.getElementById('agent-save-btn').textContent = 'Save Copy'
+      document.getElementById('agent-form-id').value = ''
+      document.getElementById('agent-name-input').value = agent.name + ' (Copy)'
+      document.getElementById('agent-model-custom').value = agent.model
+      document.getElementById('agent-desc-input').value = agent.description || ''
+      document.getElementById('agent-system-prompt').value = agent.systemPrompt || ''
+    }
+
+    async function setDefaultAgent(agentId) {
+      try {
+        await fetch(`${API_URL}/api/agents/${agentId}/set-default`, { method: 'POST' })
+        await loadAgents()
+        renderAgentsList()
+      } catch (e) {
+        console.error('Failed to set default agent:', e)
+        alert('Failed to set default agent')
+      }
+    }
+
+    async function deleteAgent(agentId) {
+      if (!confirm('Delete this agent? Sessions using this agent will still work but may show "Unknown" agent.')) return
+      try {
+        const res = await fetch(`${API_URL}/api/agents/${agentId}`, { method: 'DELETE' })
+        if (!res.ok) {
+          const data = await res.json()
+          alert(data.error || 'Failed to delete agent')
+          return
+        }
+        await loadAgents()
+        renderAgentsList()
+      } catch (e) {
+        console.error('Failed to delete agent:', e)
+        alert('Failed to delete agent')
+      }
+    }
+
+    function hideModal(type) {
+      document.getElementById(`${type}-modal`).classList.add('hidden')
+      if (type === 'settings') {
+        hideAddProvider()
+        hideAddAgent()
+        hideAddBinding()
+      }
+    }
+
+    // ========== Binding Management ==========
+    async function loadBindings() {
+      try {
+        const res = await fetch(`${API_URL}/api/bindings`)
+        const data = await res.json()
+        bindings = data.bindings
+      } catch (e) {
+        console.error('Failed to load bindings:', e)
+      }
+    }
+
+    function renderBindingsList() {
+      const list = document.getElementById('bindings-list')
+      if (bindings.length === 0) {
+        list.innerHTML = '<p style="color: #888; padding: 12px;">No bindings configured. Messages will route to the default agent.</p>'
+        return
+      }
+
+      list.innerHTML = bindings.map(b => {
+        const agent = agents.find(a => a.agentId === b.agentId)
+        const agentName = agent?.name || b.agentId
+        const matchDesc = formatBindingMatch(b.match)
+        return `
+        <div class="item" style="display: flex; flex-direction: column; gap: 8px;">
+          <div>
+            <div class="item-title">
+              <span style="color: var(--accent-secondary);">${b.match.channel}</span>
+              → ${agentName}
+              ${b.priority ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Priority: ${b.priority}</span>` : ''}
+            </div>
+            <div class="item-meta">${matchDesc}</div>
+          </div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="editBinding('${b.id}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteBinding('${b.id}')" style="color: var(--accent-primary);">Delete</button>
+          </div>
+        </div>
+      `}).join('')
+    }
+
+    function formatBindingMatch(match) {
+      if (match.peer) {
+        return `${match.peer.kind === 'dm' ? 'User' : match.peer.kind === 'group' ? 'Group' : 'Channel'}: ${match.peer.id}`
+      }
+      if (match.guildId) return `Discord Guild: ${match.guildId}`
+      if (match.teamId) return `Slack Team: ${match.teamId}`
+      if (match.accountId && match.accountId !== '*') return `Account: ${match.accountId}`
+      return 'All messages from this channel'
+    }
+
+    function showAddBinding() {
+      document.getElementById('add-binding-form').style.display = 'block'
+      document.getElementById('binding-form-title').textContent = 'Add New Binding'
+      document.getElementById('binding-save-btn').textContent = 'Save Binding'
+      document.getElementById('binding-form-id').value = ''
+      loadBindingAgentOptions()
+      updateBindingMatchFields()
+    }
+
+    // Quick add binding for a specific channel (simple mode)
+    function quickAddBinding(channel) {
+      document.getElementById('add-binding-form').style.display = 'block'
+      document.getElementById('binding-form-title').textContent = `Add ${channel.charAt(0).toUpperCase() + channel.slice(1)} Binding`
+      document.getElementById('binding-save-btn').textContent = 'Save Binding'
+      document.getElementById('binding-form-id').value = ''
+      document.getElementById('binding-channel').value = channel
+      document.getElementById('binding-match-type').value = 'channel'
+      loadBindingAgentOptions()
+      updateBindingMatchFields()
+    }
+
+    function hideAddBinding() {
+      document.getElementById('add-binding-form').style.display = 'none'
+      document.getElementById('binding-form-id').value = ''
+      document.getElementById('binding-channel').value = 'websocket'
+      document.getElementById('binding-match-type').value = 'channel'
+    }
+
+    function loadBindingAgentOptions() {
+      const select = document.getElementById('binding-agent')
+      if (agents.length === 0) {
+        select.innerHTML = '<option value="">No agents available</option>'
+      } else {
+        select.innerHTML = agents.map(a =>
+          `<option value="${a.agentId}">${a.name} (${a.model})</option>`
+        ).join('')
+      }
+    }
+
+    function updateBindingMatchFields() {
+      const matchType = document.getElementById('binding-match-type').value
+      const channel = document.getElementById('binding-channel').value
+      const container = document.getElementById('binding-match-fields')
+
+      switch (matchType) {
+        case 'peer':
+          let peerHelp = ''
+          if (channel === 'telegram') {
+            peerHelp = `
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                <strong style="color: var(--text-secondary);">How to get Telegram IDs:</strong><br>
+                • <strong>User ID:</strong> Forward a message from the user to @userinfobot<br>
+                • <strong>Group ID:</strong> Add @userinfobot to the group, it will show the ID (usually starts with -100)<br>
+                • Or send any message to your bot, check the logs for "from" field
+              </div>
+            `
+          } else if (channel === 'discord') {
+            peerHelp = `
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                <strong style="color: var(--text-secondary);">How to get Discord IDs:</strong><br>
+                • Enable Developer Mode: Settings → Advanced → Developer Mode<br>
+                • Right-click user/channel → Copy ID
+              </div>
+            `
+          }
+          container.innerHTML = `
+            <div class="form-group">
+              <label>Peer Type</label>
+              <select id="binding-peer-kind">
+                <option value="dm">User (DM)</option>
+                <option value="group">Group</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Peer ID</label>
+              <input type="text" id="binding-peer-id" placeholder="e.g., 123456789">
+              ${peerHelp}
+            </div>
+          `
+          break
+        case 'guild':
+          container.innerHTML = `
+            <div class="form-group">
+              <label>Discord Server ID</label>
+              <input type="text" id="binding-guild-id" placeholder="e.g., 123456789012345678">
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                Right-click server icon → Copy Server ID (need Developer Mode enabled)
+              </div>
+            </div>
+          `
+          break
+        case 'team':
+          container.innerHTML = `
+            <div class="form-group">
+              <label>Slack Workspace ID</label>
+              <input type="text" id="binding-team-id" placeholder="e.g., T12345678">
+              <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                Find in Slack URL: app.slack.com/client/<strong>T12345678</strong>/...
+              </div>
+            </div>
+          `
+          break
+        case 'account':
+          container.innerHTML = `
+            <div class="form-group">
+              <label>Account ID</label>
+              <input type="text" id="binding-account-id" placeholder="Your bot account identifier">
+            </div>
+          `
+          break
+        default:
+          container.innerHTML = ''
+      }
+    }
+
+    async function saveBinding() {
+      const id = document.getElementById('binding-form-id').value
+      const channel = document.getElementById('binding-channel').value
+      const agentId = document.getElementById('binding-agent').value
+      const matchType = document.getElementById('binding-match-type').value
+
+      if (!agentId) {
+        alert('Please select an agent')
+        return
+      }
+
+      const match = { channel }
+
+      switch (matchType) {
+        case 'peer':
+          const peerKind = document.getElementById('binding-peer-kind')?.value
+          const peerId = document.getElementById('binding-peer-id')?.value
+          if (!peerId) {
+            alert('Peer ID is required')
+            return
+          }
+          match.peer = { kind: peerKind, id: peerId }
+          break
+        case 'guild':
+          const guildId = document.getElementById('binding-guild-id')?.value
+          if (!guildId) {
+            alert('Server ID is required')
+            return
+          }
+          match.guildId = guildId
+          break
+        case 'team':
+          const teamId = document.getElementById('binding-team-id')?.value
+          if (!teamId) {
+            alert('Workspace ID is required')
+            return
+          }
+          match.teamId = teamId
+          break
+        case 'channel':
+          match.accountId = '*'
+          break
+      }
+
+      try {
+        const body = { agentId, match }
+
+        if (id) {
+          await fetch(`${API_URL}/api/bindings/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+        } else {
+          await fetch(`${API_URL}/api/bindings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+        }
+        hideAddBinding()
+        await loadBindings()
+        renderBindingsList()
+      } catch (e) {
+        console.error('Failed to save binding:', e)
+        alert('Failed to save binding')
+      }
+    }
+
+    function editBinding(bindingId) {
+      const binding = bindings.find(b => b.id === bindingId)
+      if (!binding) return
+
+      document.getElementById('add-binding-form').style.display = 'block'
+      document.getElementById('binding-form-title').textContent = 'Edit Binding'
+      document.getElementById('binding-save-btn').textContent = 'Update Binding'
+      document.getElementById('binding-form-id').value = bindingId
+      document.getElementById('binding-channel').value = binding.match.channel
+      document.getElementById('binding-priority').value = binding.priority || ''
+
+      loadBindingAgentOptions()
+      document.getElementById('binding-agent').value = binding.agentId
+
+      // Determine match type
+      let matchType = 'channel'
+      if (binding.match.peer) matchType = 'peer'
+      else if (binding.match.guildId) matchType = 'guild'
+      else if (binding.match.teamId) matchType = 'team'
+      else if (binding.match.accountId && binding.match.accountId !== '*') matchType = 'account'
+
+      document.getElementById('binding-match-type').value = matchType
+      updateBindingMatchFields()
+
+      // Fill in match fields
+      setTimeout(() => {
+        if (binding.match.peer) {
+          document.getElementById('binding-peer-kind').value = binding.match.peer.kind
+          document.getElementById('binding-peer-id').value = binding.match.peer.id
+        } else if (binding.match.guildId) {
+          document.getElementById('binding-guild-id').value = binding.match.guildId
+        } else if (binding.match.teamId) {
+          document.getElementById('binding-team-id').value = binding.match.teamId
+        } else if (binding.match.accountId && binding.match.accountId !== '*') {
+          document.getElementById('binding-account-id').value = binding.match.accountId
+        }
+      }, 0)
+    }
+
+    async function deleteBinding(bindingId) {
+      if (!confirm('Delete this binding?')) return
+      try {
+        await fetch(`${API_URL}/api/bindings/${bindingId}`, { method: 'DELETE' })
+        await loadBindings()
+        renderBindingsList()
+      } catch (e) {
+        console.error('Failed to delete binding:', e)
+        alert('Failed to delete binding')
+      }
+    }
+
+    // ========== Cron Management ==========
+    let cronJobs = []
+
+    async function loadCronJobs() {
+      try {
+        const res = await fetch(`${API_URL}/api/cron`)
+        const data = await res.json()
+        cronJobs = data.jobs || []
+      } catch (e) {
+        console.error('Failed to load cron jobs:', e)
+      }
+    }
+
+    function renderCronList() {
+      loadCronJobs().then(() => {
+        const list = document.getElementById('cron-list')
+        if (cronJobs.length === 0) {
+          list.innerHTML = '<p style="color: #888; padding: 12px;">No cron jobs configured.</p>'
+          return
+        }
+
+        list.innerHTML = cronJobs.map(job => {
+          const statusIcon = job.enabled ? '✓' : '✗'
+          const statusColor = job.enabled ? 'var(--accent-secondary)' : 'var(--text-muted)'
+          const lastRun = job.lastRun ? new Date(job.lastRun).toLocaleString() : 'Never'
+          const channel = job.channel || 'websocket'
+          const target = job.to || 'default'
+          const jobName = job.name ? escapeHtml(job.name) : ''
+          const jobDesc = job.description ? escapeHtml(job.description) : ''
+          const agent = job.agentId ? agents.find(a => a.agentId === job.agentId) : null
+          const agentLabel = agent ? `<span style="color: var(--accent-primary); font-size: 12px; margin-left: 4px;">${escapeHtml(agent.name)}</span>` : ''
+          return `
+          <div class="item" style="display: flex; flex-direction: column; gap: 8px;">
+            <div>
+              <div class="item-title">
+                <span style="color: ${statusColor}; font-weight: bold;">${statusIcon}</span>
+                ${jobName ? `<span style="font-weight: 600;">${jobName}</span>` : ''}
+                <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; font-size: 12px;">${job.schedule}</code>
+                <span style="color: var(--text-muted); font-size: 12px; margin-left: 4px;">${channel}:${target}</span>
+                ${agentLabel}
+              </div>
+              ${jobDesc ? `<div class="item-meta" style="margin-top: 2px; font-style: italic;">${jobDesc}</div>` : ''}
+              <div class="item-meta" style="margin-top: 4px;">${job.message.length > 80 ? escapeHtml(job.message.slice(0, 80)) + '...' : escapeHtml(job.message)}</div>
+              <div class="item-meta" style="font-size: 11px;">Last run: ${lastRun}</div>
+            </div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="editCron('${job.id}')">Edit</button>
+              <button class="btn btn-secondary btn-sm" onclick="duplicateCron('${job.id}')">Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleCron('${job.id}', ${!job.enabled})">${job.enabled ? 'Disable' : 'Enable'}</button>
+              <button class="btn btn-secondary btn-sm" onclick="deleteCron('${job.id}')" style="color: var(--accent-primary);">Delete</button>
+            </div>
+          </div>
+        `}).join('')
+      })
+    }
+
+    function showAddCron() {
+      document.getElementById('add-cron-form').style.display = 'block'
+      document.getElementById('cron-form-title').textContent = 'Add New Cron Job'
+      document.getElementById('cron-save-btn').textContent = 'Save Cron Job'
+      document.getElementById('cron-form-id').value = ''
+      document.getElementById('cron-name').value = ''
+      document.getElementById('cron-description').value = ''
+      document.getElementById('cron-schedule').value = ''
+      document.getElementById('cron-message').value = ''
+      document.getElementById('cron-channel').value = ''
+      document.getElementById('cron-to').value = ''
+      loadCronAgentOptions()
+      document.getElementById('cron-agent').value = ''
+    }
+
+    function hideAddCron() {
+      document.getElementById('add-cron-form').style.display = 'none'
+      document.getElementById('cron-form-id').value = ''
+    }
+
+    function loadCronAgentOptions() {
+      const select = document.getElementById('cron-agent')
+      select.innerHTML = '<option value="">Default Agent</option>' +
+        agents.map(a => `<option value="${a.agentId}">${a.name} (${a.model})</option>`).join('')
+    }
+
+    function editCron(jobId) {
+      const job = cronJobs.find(j => j.id === jobId)
+      if (!job) return
+
+      document.getElementById('add-cron-form').style.display = 'block'
+      document.getElementById('cron-form-title').textContent = 'Edit Cron Job'
+      document.getElementById('cron-save-btn').textContent = 'Update Cron Job'
+      document.getElementById('cron-form-id').value = jobId
+      document.getElementById('cron-name').value = job.name || ''
+      document.getElementById('cron-description').value = job.description || ''
+      document.getElementById('cron-schedule').value = job.schedule
+      document.getElementById('cron-message').value = job.message
+      document.getElementById('cron-channel').value = job.channel || ''
+      document.getElementById('cron-to').value = job.to || ''
+      loadCronAgentOptions()
+      document.getElementById('cron-agent').value = job.agentId || ''
+    }
+
+    async function duplicateCron(jobId) {
+      try {
+        const res = await fetch(`${API_URL}/api/cron/${jobId}/duplicate`, { method: 'POST' })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.error || 'Failed to duplicate cron job')
+          return
+        }
+        renderCronList()
+      } catch (e) {
+        console.error('Failed to duplicate cron job:', e)
+        alert('Failed to duplicate cron job')
+      }
+    }
+
+    async function saveCron() {
+      const id = document.getElementById('cron-form-id').value
+      const name = document.getElementById('cron-name').value.trim() || undefined
+      const description = document.getElementById('cron-description').value.trim() || undefined
+      const schedule = document.getElementById('cron-schedule').value.trim()
+      const message = document.getElementById('cron-message').value.trim()
+      const agentId = document.getElementById('cron-agent').value || undefined
+      const channel = document.getElementById('cron-channel').value || undefined
+      const to = document.getElementById('cron-to').value.trim() || undefined
+
+      if (!schedule || !message) {
+        alert('Schedule and message are required')
+        return
+      }
+
+      try {
+        const body = { schedule, message, channel, to, name, description, agentId }
+        let res
+        if (id) {
+          res = await fetch(`${API_URL}/api/cron/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+        } else {
+          res = await fetch(`${API_URL}/api/cron`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+        }
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.error || 'Failed to save cron job')
+          return
+        }
+        hideAddCron()
+        renderCronList()
+      } catch (e) {
+        console.error('Failed to save cron job:', e)
+        alert('Failed to save cron job')
+      }
+    }
+
+    async function toggleCron(jobId, enable) {
+      try {
+        await fetch(`${API_URL}/api/cron/${jobId}/${enable ? 'enable' : 'disable'}`, { method: 'POST' })
+        renderCronList()
+      } catch (e) {
+        console.error('Failed to toggle cron job:', e)
+      }
+    }
+
+    async function deleteCron(jobId) {
+      if (!confirm('Delete this cron job?')) return
+      try {
+        await fetch(`${API_URL}/api/cron/${jobId}`, { method: 'DELETE' })
+        renderCronList()
+      } catch (e) {
+        console.error('Failed to delete cron job:', e)
+        alert('Failed to delete cron job')
+      }
+    }
+
+    function updateStatus(state, text) {
+      const dot = document.getElementById('status-dot')
+      const statusText = document.getElementById('status-text')
+      dot.className = `status-dot ${state}`
+      statusText.textContent = text
+    }
+
+    function formatDate(ts) {
+      const d = new Date(ts)
+      const now = new Date()
+      if (d.toDateString() === now.toDateString()) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+      return d.toLocaleDateString()
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div')
+      div.textContent = text
+      return div.innerHTML
+    }
+
+    function copyToClipboard(text) {
+      // Use textarea fallback for HTTP (non-HTTPS) environments
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.cssText = 'position: fixed; left: -9999px; top: -9999px;'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      // Show brief feedback
+      const toast = document.createElement('div')
+      toast.textContent = 'Copied: ' + text
+      toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent-secondary); color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 1000; animation: fadeIn 0.2s ease;'
+      document.body.appendChild(toast)
+      setTimeout(() => toast.remove(), 1500)
+    }
+
+    // Event listeners
+    // agent-select 不再触发 loadSessions，因为现在显示所有 sessions
+    document.getElementById('message-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage()
+    })
+
+    // Start
+    init()
+  </script>
+</body>
+</html>

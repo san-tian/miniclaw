@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+data/sessions/
+data/agents/
+data/routing/
+data/subagents/
+data/config/
+*.log
